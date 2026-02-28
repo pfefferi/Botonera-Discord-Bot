@@ -113,7 +113,8 @@ app.post('/play', (req, res) => {
     }
 
     if (!currentConnection) {
-        return res.status(400).json({ error: 'Bot is not currently in a voice channel. Type !join in discord first.' });
+        console.log('REJECTED: Bot tried to play sound but is not in a voice channel.');
+        return res.status(400).json({ error: 'Bot is not currently in a voice channel. JOIN a voice channel and type !join in Discord first!' });
     }
 
     try {

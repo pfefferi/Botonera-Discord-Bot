@@ -110,7 +110,18 @@ document.addEventListener('DOMContentLoaded', () => {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ filename: fileName })
-        }).catch(err => console.log('Bot server not reachable/configured yet.'));
+        })
+            .then(async response => {
+                if (!response.ok) {
+                    const data = await response.json();
+                    console.error('Bot Error:', data.error);
+                    if (response.status === 400) {
+                        // Alert the user if the bot is not in a channel
+                        alert('Bot Error: ' + data.error);
+                    }
+                }
+            })
+            .catch(err => console.log('Bot server not reachable/configured yet.'));
 
         // Play and handle completion
         audio.play().catch(err => {
