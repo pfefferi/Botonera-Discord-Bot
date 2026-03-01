@@ -162,13 +162,19 @@ app.post('/stop', (req, res) => {
 // 4. Start everything up
 app.listen(PORT, () => {
     console.log(`Express API server running on port ${PORT}`);
-
-    // Login to Discord
-    if (process.env.DISCORD_TOKEN) {
-        client.login(process.env.DISCORD_TOKEN).catch(err => {
-            console.error('Failed to login to Discord:', err);
-        });
-    } else {
-        console.log('WARNING: Missing DISCORD_TOKEN in .env file!');
-    }
 });
+
+// Login to Discord (Global trace)
+console.log('>>> ATTEMPTING DISCORD LOGIN...');
+console.log('>>> DISCORD_TOKEN length:', process.env.DISCORD_TOKEN ? process.env.DISCORD_TOKEN.length : 0);
+
+if (process.env.DISCORD_TOKEN && process.env.DISCORD_TOKEN.length > 10) {
+    client.login(process.env.DISCORD_TOKEN)
+        .then(() => console.log('>>> Login call successful (Promise resolved)'))
+        .catch(err => {
+            console.error('>>> CRITICAL LOGIN ERROR:', err);
+        });
+} else {
+    console.log('>>> WARNING: DISCORD_TOKEN is missing or too short. Check Render Environment Variables!');
+}
+
