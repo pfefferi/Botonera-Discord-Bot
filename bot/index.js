@@ -81,6 +81,8 @@ client.on('messageCreate', async (message) => {
                     channelId: channel.id,
                     guildId: channel.guild.id,
                     adapterCreator: channel.guild.voiceAdapterCreator,
+                    selfDeaf: false,
+                    selfMute: false
                 });
 
                 // Subscribe connection to the player
@@ -129,6 +131,15 @@ client.on('messageCreate', async (message) => {
     }
 });
 
+// Audio Player Diagnostics
+player.on('stateChange', (oldState, newState) => {
+    console.log(`>>> AudioPlayer state change: ${oldState.status} => ${newState.status}`);
+});
+
+player.on('error', error => {
+    console.error(`>>> AudioPlayer Error: ${error.message} with resource ${error.resource.metadata}`);
+});
+
 // 3. Express Endpoint to handle audio playback requests
 app.post('/play', (req, res) => {
     const { filename } = req.body;
@@ -143,20 +154,29 @@ app.post('/play', (req, res) => {
     }
 
     try {
-        // Resolve the path to the audio file (assuming it's in the parent project folder)
+        // Resolve the path to the audio file
         const audioPath = path.resolve(__dirname, '../Chao Voices', filename);
 
-        console.log(`Playing audio: ${audioPath}`);
+        // Audit file existence
+        const fs = require('fs');
+        if (!fs.existsSync(audioPath)) {
+            console.error(`>>> FILE MISSING: ${audioPath}`);
+            return res.status(404).json({ error: `Audio file not found on server: ${filename}` });
+        }
+
+        console.log(`>>> Playing audio: ${audioPath}`);
 
         // Create an audio resource from the file
-        const resource = createAudioResource(audioPath);
+        const resource = createAudioResource(audioPath, {
+            metadata: filename
+        });
 
         // Play it!
         player.play(resource);
 
         res.status(200).json({ success: true, message: `Playing ${filename}` });
     } catch (error) {
-        console.error('Error playing sound:', error);
+        console.error('>>> Error playing sound:', error);
         res.status(500).json({ error: 'Failed to play sound' });
     }
 });
