@@ -3,11 +3,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const stopAllBtn = document.getElementById('stop-all-btn');
     const volumeSlider = document.getElementById('volume-slider');
     const overlapCheckbox = document.getElementById('overlap-checkbox');
+    const tabBtns = document.querySelectorAll('.tab-btn');
 
-    // Store active audio instances
+    // Store all files and active category
+    let allFiles = {};
+    let activeCategory = 'chao';
     let activeAudios = [];
-
-    // Global volume
     let currentVolume = parseFloat(volumeSlider.value);
 
     // Fetch the list of audio files

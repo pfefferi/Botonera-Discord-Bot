@@ -149,20 +149,29 @@ player.on('error', error => {
 
 // 3. Express Endpoint to handle audio playback requests
 app.post('/play', (req, res) => {
-    const { filename } = req.body;
+    const { filename, folder } = req.body;
 
     if (!filename) {
         return res.status(400).json({ error: 'Filename is required' });
     }
 
+    // Map frontend keys to actual directory names
+    const folderMap = {
+        'chao': 'Chao Voices',
+        'sonic': 'Sonic',
+        'shadow': 'Shadow'
+    };
+
+    const targetFolder = folderMap[folder] || 'Chao Voices';
+
     if (!currentConnection) {
-        console.log('REJECTED: Bot tried to play sound but is not in a voice channel.');
+        console.log(`REJECTED: Bot tried to play sound [${targetFolder}/${filename}] but is not in a voice channel.`);
         return res.status(400).json({ error: 'Bot is not currently in a voice channel. JOIN a voice channel and type !join in Discord first!' });
     }
 
     try {
         // Resolve the path to the audio file
-        const audioPath = path.resolve(__dirname, '../Chao Voices', filename);
+        const audioPath = path.resolve(__dirname, '../', targetFolder, filename);
 
         // Audit file existence
         const fs = require('fs');

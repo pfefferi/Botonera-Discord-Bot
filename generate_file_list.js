@@ -1,15 +1,30 @@
 const fs = require('fs');
 const path = require('path');
 
-const voicesDir = path.join(__dirname, 'Chao Voices');
+const directories = {
+    'chao': 'Chao Voices',
+    'sonic': 'Sonic',
+    'shadow': 'Shadow'
+};
+
 const outputFile = path.join(__dirname, 'files.json');
+const result = {};
 
 try {
-    const files = fs.readdirSync(voicesDir);
-    const audioFiles = files.filter(f => f.toLowerCase().endsWith('.wav') || f.toLowerCase().endsWith('.mp3'));
+    for (const [key, dirName] of Object.entries(directories)) {
+        const dirPath = path.join(__dirname, dirName);
+        if (fs.existsSync(dirPath)) {
+            const files = fs.readdirSync(dirPath);
+            result[key] = files.filter(f => f.toLowerCase().endsWith('.wav') || f.toLowerCase().endsWith('.mp3'));
+            console.log(`Scanned ${dirName}: found ${result[key].length} files.`);
+        } else {
+            console.warn(`Directory not found: ${dirName}`);
+            result[key] = [];
+        }
+    }
 
-    fs.writeFileSync(outputFile, JSON.stringify(audioFiles, null, 2));
-    console.log(`Successfully generated files.json with ${audioFiles.length} files.`);
+    fs.writeFileSync(outputFile, JSON.stringify(result, null, 2));
+    console.log(`Successfully generated files.json with categorized sounds.`);
 } catch (err) {
-    console.error('Error scanning directory:', err);
+    console.error('Error scanning directories:', err);
 }
