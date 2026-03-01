@@ -226,21 +226,34 @@ const attemptLogin = async (retries = 0) => {
     console.log(`>>> TOKEN FORMAT: Start=${token.substring(0, 5)}... End=...${token.substring(token.length - 5)}`);
 
     try {
-        await client.login(token);
+        // Enforce a timeout on the login promise
+        const loginPromise = client.login(token);
+        const timeoutPromise = new Promise((_, reject) =>
+            setTimeout(() => reject(new Error('Login timeout')), 15000)
+        );
+
+        await Promise.race([loginPromise, timeoutPromise]);
         console.log('>>> Login call successful (Promise resolved)');
     } catch (err) {
         console.error(`>>> LOGIN ERROR (Try #${retries + 1}):`, err.message);
 
-        // If we hit a rate limit (429), retry with exponential backoff
-        if (err.message.includes('429') || err.message.includes('Rate limit')) {
-            const waitTime = Math.min(Math.pow(2, retries) * 5000, 60000); // Exponential backoff max 1m
-            console.log(`>>> RATE LIMITED. Retrying in ${waitTime / 1000}s...`);
+        // If we hit a rate limit (429) or a timeout, retry with exponential backoff
+        if (err.message.includes('429') || err.message.includes('Rate limit') || err.message.includes('timeout')) {
+            const waitTime = Math.min(Math.pow(2, retries) * 5000, 60000); // Max 1m
+            console.log(`>>> RETRYING in ${waitTime / 1000}s...`);
             setTimeout(() => attemptLogin(retries + 1), waitTime);
         } else {
             console.error('>>> CRITICAL ERROR: Non-retryable failure.', err);
         }
     }
 };
+
+// Global Audio Player Logs
+console.log('>>> Initializing Audio Player event listeners...');
+player.on(AudioPlayerStatus.Playing, () => console.log('>>> Audio player is PLAYING'));
+player.on(AudioPlayerStatus.Buffering, () => console.log('>>> Audio player is BUFFERING'));
+player.on(AudioPlayerStatus.Idle, () => console.log('>>> Audio player is IDLE'));
+player.on('error', error => console.error('>>> Audio player ERROR:', error));
 
 // 4. Start everything up
 app.listen(PORT, async () => {
