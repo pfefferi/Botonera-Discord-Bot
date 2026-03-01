@@ -1,5 +1,5 @@
 require('dotenv').config();
-const { Client, GatewayIntentBits } = require('discord.js');
+const { Client, GatewayIntentBits, Events } = require('discord.js');
 const {
     joinVoiceChannel,
     createAudioPlayer,
@@ -42,8 +42,15 @@ const player = createAudioPlayer({
 
 let currentConnection = null;
 
-client.once('clientReady', () => {
-    console.log(`Bot is ready! Logged in as ${client.user.tag}`);
+client.once(Events.ClientReady, (c) => {
+    console.log(`>>> [READY] Bot logged in as ${c.user.tag}`);
+    // Diagnostic: Check for encryption libraries
+    try {
+        require('sodium-native');
+        console.log('>>> [CRYPTO] sodium-native is AVAILABLE');
+    } catch (e) {
+        console.log('>>> [CRYPTO] sodium-native is NOT available');
+    }
 });
 
 // Global error handler
