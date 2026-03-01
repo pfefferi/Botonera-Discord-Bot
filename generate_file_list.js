@@ -7,7 +7,7 @@ const outputFile = path.join(__dirname, 'files.json');
 try {
     const files = fs.readdirSync(voicesDir);
     const audioFiles = files.filter(f => f.toLowerCase().endsWith('.wav') || f.toLowerCase().endsWith('.mp3'));
-    
+
     fs.writeFileSync(outputFile, JSON.stringify(audioFiles, null, 2));
     console.log(`Successfully generated files.json with ${audioFiles.length} files.`);
 } catch (err) {
