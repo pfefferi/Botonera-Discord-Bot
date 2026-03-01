@@ -193,6 +193,35 @@ const checkConnectivity = async () => {
     });
 };
 
+// Login to Discord with Retry Logic (to bypass 429 rate limits)
+const attemptLogin = async (retries = 0) => {
+    const token = process.env.DISCORD_TOKEN || '';
+
+    if (token.length < 20) {
+        console.log('>>> WARNING: DISCORD_TOKEN is missing or too short.');
+        return;
+    }
+
+    console.log(`>>> ATTEMPTING DISCORD LOGIN (Try #${retries + 1})...`);
+    console.log(`>>> TOKEN FORMAT: Start=${token.substring(0, 5)}... End=...${token.substring(token.length - 5)}`);
+
+    try {
+        await client.login(token);
+        console.log('>>> Login call successful (Promise resolved)');
+    } catch (err) {
+        console.error(`>>> LOGIN ERROR (Try #${retries + 1}):`, err.message);
+
+        // If we hit a rate limit (429), retry with exponential backoff
+        if (err.message.includes('429') || err.message.includes('Rate limit')) {
+            const waitTime = Math.min(Math.pow(2, retries) * 5000, 60000); // Exponential backoff max 1m
+            console.log(`>>> RATE LIMITED. Retrying in ${waitTime / 1000}s...`);
+            setTimeout(() => attemptLogin(retries + 1), waitTime);
+        } else {
+            console.error('>>> CRITICAL ERROR: Non-retryable failure.', err);
+        }
+    }
+};
+
 // 4. Start everything up
 app.listen(PORT, async () => {
     console.log(`Express API server running on port ${PORT}`);
@@ -200,23 +229,7 @@ app.listen(PORT, async () => {
     console.log(`>>> PLATFORM: ${process.platform}`);
 
     await checkConnectivity();
-
-    // Login to Discord (Global trace)
-    console.log('>>> ATTEMPTING DISCORD LOGIN...');
-    const token = process.env.DISCORD_TOKEN || '';
-    console.log('>>> DISCORD_TOKEN length:', token.length);
-
-    if (token.length > 20) {
-        console.log(`>>> TOKEN FORMAT: Start=${token.substring(0, 5)}... End=...${token.substring(token.length - 5)}`);
-
-        client.login(token)
-            .then(() => console.log('>>> Login call successful (Promise resolved)'))
-            .catch(err => {
-                console.error('>>> CRITICAL LOGIN ERROR:', err);
-            });
-    } else {
-        console.log('>>> WARNING: DISCORD_TOKEN is missing or too short. Check Render Environment Variables!');
-    }
+    await attemptLogin();
 });
 
 
