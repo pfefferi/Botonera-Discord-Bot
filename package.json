@@ -6,6 +6,9 @@
   "scripts": {
     "start": "node bot/index.js"
   },
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "dependencies": {
     "@discordjs/voice": "^0.17.0",
     "cors": "^2.8.5",

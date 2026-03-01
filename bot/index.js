@@ -51,15 +51,26 @@ client.on('error', error => {
     console.error('DISCORD CLIENT ERROR:', error);
 });
 
+// Debug listener (Verbose)
+client.on('debug', info => {
+    if (info.includes('Ready') || info.includes('Login') || info.includes('Invalid')) {
+        console.log(`[DEBUG] ${info}`);
+    }
+});
+
 // Command to join a voice channel
 client.on('messageCreate', async (message) => {
     // LOG EVERY MESSAGE RECEIVED (Debug)
     console.log(`[MSG RECEIVE] "${message.content}" from ${message.author.tag} in ${message.guild ? 'Server: ' + message.guild.name : 'DMs'}`);
 
+    if (message.author.bot) return;
+
     if (!message.guild) return;
 
     // Simple command to summon the bot to your voice channel
-    if (message.content === '!join') {
+    if (message.content === '!join' || message.content === '!ping') {
+        if (message.content === '!ping') return message.reply('Pong!');
+
         console.log('>>> Processing !join command');
         const channel = message.member?.voice.channel;
 
@@ -162,19 +173,20 @@ app.post('/stop', (req, res) => {
 // 4. Start everything up
 app.listen(PORT, () => {
     console.log(`Express API server running on port ${PORT}`);
+
+    // Login to Discord (Global trace)
+    console.log('>>> ATTEMPTING DISCORD LOGIN...');
+    console.log('>>> DISCORD_TOKEN length:', process.env.DISCORD_TOKEN ? process.env.DISCORD_TOKEN.length : 0);
+
+    if (process.env.DISCORD_TOKEN && process.env.DISCORD_TOKEN.length > 10) {
+        client.login(process.env.DISCORD_TOKEN)
+            .then(() => console.log('>>> Login call successful (Promise resolved)'))
+            .catch(err => {
+                console.error('>>> CRITICAL LOGIN ERROR:', err);
+            });
+    } else {
+        console.log('>>> WARNING: DISCORD_TOKEN is missing or too short. Check Render Environment Variables!');
+    }
 });
 
-// Login to Discord (Global trace)
-console.log('>>> ATTEMPTING DISCORD LOGIN...');
-console.log('>>> DISCORD_TOKEN length:', process.env.DISCORD_TOKEN ? process.env.DISCORD_TOKEN.length : 0);
-
-if (process.env.DISCORD_TOKEN && process.env.DISCORD_TOKEN.length > 10) {
-    client.login(process.env.DISCORD_TOKEN)
-        .then(() => console.log('>>> Login call successful (Promise resolved)'))
-        .catch(err => {
-            console.error('>>> CRITICAL LOGIN ERROR:', err);
-        });
-} else {
-    console.log('>>> WARNING: DISCORD_TOKEN is missing or too short. Check Render Environment Variables!');
-}
 
