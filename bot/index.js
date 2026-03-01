@@ -170,16 +170,46 @@ app.post('/stop', (req, res) => {
     }
 });
 
+// --- DIAGNOSTICS & AUDIT ---
+process.on('unhandledRejection', (reason, promise) => {
+    console.error('>>> UNHANDLED REJECTION:', reason);
+});
+
+process.on('uncaughtException', (error) => {
+    console.error('>>> UNCAUGHT EXCEPTION:', error);
+});
+
+const checkConnectivity = async () => {
+    const https = require('https');
+    console.log('>>> PROBING DISCORD CONNECTIVITY...');
+    return new Promise((resolve) => {
+        https.get('https://discord.com/api/v10/gateway', (res) => {
+            console.log(`>>> CONNECTIVITY TEST: Status ${res.statusCode}`);
+            resolve(res.statusCode === 200);
+        }).on('error', (e) => {
+            console.error('>>> CONNECTIVITY TEST: FAILED', e.message);
+            resolve(false);
+        });
+    });
+};
+
 // 4. Start everything up
-app.listen(PORT, () => {
+app.listen(PORT, async () => {
     console.log(`Express API server running on port ${PORT}`);
+    console.log(`>>> NODE VERSION: ${process.version}`);
+    console.log(`>>> PLATFORM: ${process.platform}`);
+
+    await checkConnectivity();
 
     // Login to Discord (Global trace)
     console.log('>>> ATTEMPTING DISCORD LOGIN...');
-    console.log('>>> DISCORD_TOKEN length:', process.env.DISCORD_TOKEN ? process.env.DISCORD_TOKEN.length : 0);
+    const token = process.env.DISCORD_TOKEN || '';
+    console.log('>>> DISCORD_TOKEN length:', token.length);
 
-    if (process.env.DISCORD_TOKEN && process.env.DISCORD_TOKEN.length > 10) {
-        client.login(process.env.DISCORD_TOKEN)
+    if (token.length > 20) {
+        console.log(`>>> TOKEN FORMAT: Start=${token.substring(0, 5)}... End=...${token.substring(token.length - 5)}`);
+
+        client.login(token)
             .then(() => console.log('>>> Login call successful (Promise resolved)'))
             .catch(err => {
                 console.error('>>> CRITICAL LOGIN ERROR:', err);
@@ -188,5 +218,6 @@ app.listen(PORT, () => {
         console.log('>>> WARNING: DISCORD_TOKEN is missing or too short. Check Render Environment Variables!');
     }
 });
+
 
 
