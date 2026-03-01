@@ -19,4 +19,5 @@ This project contains a sleek web interface (HTML/CSS/JS) to play sounds, integr
 - [x] Create Discord bot backend integration
 - [x] Serve frontend from backend server
 - [x] Push Initial Code to GitHub
+- [x] Implement Sonic and Shadow categorized tabs
 - [ ] Deploy to Render
