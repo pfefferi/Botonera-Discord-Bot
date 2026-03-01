@@ -46,15 +46,25 @@ client.once('ready', () => {
     console.log(`Bot is ready! Logged in as ${client.user.tag}`);
 });
 
+// Global error handler
+client.on('error', error => {
+    console.error('DISCORD CLIENT ERROR:', error);
+});
+
 // Command to join a voice channel
 client.on('messageCreate', async (message) => {
+    // LOG EVERY MESSAGE RECEIVED (Debug)
+    console.log(`[MSG RECEIVE] "${message.content}" from ${message.author.tag} in ${message.guild ? 'Server: ' + message.guild.name : 'DMs'}`);
+
     if (!message.guild) return;
 
     // Simple command to summon the bot to your voice channel
     if (message.content === '!join') {
+        console.log('>>> Processing !join command');
         const channel = message.member?.voice.channel;
 
         if (channel) {
+            console.log(`>>> Found user in channel: ${channel.name} (${channel.id})`);
             try {
                 currentConnection = joinVoiceChannel({
                     channelId: channel.id,
@@ -65,40 +75,44 @@ client.on('messageCreate', async (message) => {
                 // Subscribe connection to the player
                 currentConnection.subscribe(player);
 
-                message.reply('Joined your voice channel! Ready to play sounds from the soundboard.');
+                await message.reply('Joined your voice channel! Ready to play sounds from the soundboard.');
+                console.log('>>> Joined and replied successfully.');
 
                 // Handle disconnections
                 currentConnection.on(VoiceConnectionStatus.Disconnected, async (oldState, newState) => {
+                    console.log('>>> Voice Connection Disconnected detected.');
                     try {
                         await Promise.race([
                             entersState(currentConnection, VoiceConnectionStatus.Signalling, 5_000),
                             entersState(currentConnection, VoiceConnectionStatus.Connecting, 5_000),
                         ]);
-                        // Seems to be reconnecting to a new channel - ignore
                     } catch (error) {
-                        // Seems to be a real disconnect which shouldn't be recovered from
                         currentConnection.destroy();
                         currentConnection = null;
-                        console.log('Bot disconnected from voice channel.');
+                        console.log('>>> Connection destroyed permanently.');
                     }
                 });
 
             } catch (error) {
-                console.error(error);
-                message.reply('Failed to join voice channel.');
+                console.error('>>> JOIN ERROR:', error);
+                message.reply('Failed to join voice channel. Check bot logs on Render.');
             }
         } else {
+            console.log('>>> User NOT in a voice channel.');
             message.reply('You need to join a voice channel first!');
         }
     }
 
     // Command to leave the voice channel
     if (message.content === '!leave') {
+        console.log('>>> Processing !leave command');
         if (currentConnection) {
             currentConnection.destroy();
             currentConnection = null;
             message.reply('Left the voice channel.');
+            console.log('>>> Left channel.');
         } else {
+            console.log('>>> !leave called but no connection active.');
             message.reply('I am not currently in a voice channel!');
         }
     }
