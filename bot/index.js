@@ -42,7 +42,7 @@ const player = createAudioPlayer({
 
 let currentConnection = null;
 
-client.once('ready', () => {
+client.once('clientReady', () => {
     console.log(`Bot is ready! Logged in as ${client.user.tag}`);
 });
 
