@@ -11,15 +11,13 @@
   },
   "dependencies": {
     "@discordjs/opus": "^0.9.0",
-    "@discordjs/voice": "latest",
+    "@discordjs/voice": "^0.17.0",
     "cors": "^2.8.5",
-    "discord.js": "latest",
+    "discord.js": "^14.14.1",
     "dotenv": "^16.4.1",
     "express": "^4.18.2",
     "ffmpeg-static": "^5.2.0",
     "libsodium-wrappers": "^0.7.13",
-    "sodium-native": "^4.0.4",
-    "tweetnacl": "^1.0.3",
-    "@snazzah/davey": "0.1.9"
+    "sodium-native": "^4.0.4"
   }
 }
