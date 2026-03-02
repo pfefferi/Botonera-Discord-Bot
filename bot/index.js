@@ -159,7 +159,8 @@ app.post('/play', (req, res) => {
     const folderMap = {
         'chao': 'Chao Voices',
         'sonic': 'Sonic',
-        'shadow': 'Shadow'
+        'shadow': 'Shadow',
+        'pokemon': 'Pokemon'
     };
 
     const targetFolder = folderMap[folder] || 'Chao Voices';

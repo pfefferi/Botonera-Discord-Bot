@@ -4,7 +4,8 @@ const path = require('path');
 const directories = {
     'chao': 'Chao Voices',
     'sonic': 'Sonic',
-    'shadow': 'Shadow'
+    'shadow': 'Shadow',
+    'pokemon': 'Pokemon'
 };
 
 const outputFile = path.join(__dirname, 'files.json');

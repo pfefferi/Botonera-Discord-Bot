@@ -111,7 +111,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const folderMap = {
             'chao': 'Chao Voices',
             'sonic': 'Sonic',
-            'shadow': 'Shadow'
+            'shadow': 'Shadow',
+            'pokemon': 'Pokemon'
         };
         const folderName = folderMap[category] || 'Chao Voices';
 

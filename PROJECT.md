@@ -8,6 +8,14 @@ This project contains a sleek web interface (HTML/CSS/JS) to play sounds, integr
 ## Repository
 [pfefferi/Botonera-Discord-Bot](https://github.com/pfefferi/Botonera-Discord-Bot)
 
+### [1.2.0] - 2026-03-01
+- Added Pokemon sound tab with 31 new audio files.
+- Updated file generator to include Pokemon directory.
+- Refactored frontend and backend mappings to support the new category.
+
+### [1.1.0] - 2026-03-01
+- Initial release with Sonic and Shadow sound tabs.
+
 ## Tech Stack
 - Frontend: HTML5, CSS3 (Custom Glassmorphism styling), Vanilla JavaScript
 - Backend: Node.js, Express, `discord.js`, `@discordjs/voice`, `libsodium-wrappers`, `ffmpeg-static`
@@ -20,4 +28,5 @@ This project contains a sleek web interface (HTML/CSS/JS) to play sounds, integr
 - [x] Serve frontend from backend server
 - [x] Push Initial Code to GitHub
 - [x] Implement Sonic and Shadow categorized tabs
+- [x] Implement Pokemon categorized tab
 - [ ] Deploy to Render
