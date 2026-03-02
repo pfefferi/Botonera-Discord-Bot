@@ -42,9 +42,13 @@ document.addEventListener('DOMContentLoaded', () => {
             btn.classList.add('active');
 
             activeCategory = category;
+            document.body.dataset.theme = category; // Switch theme
             renderCategory(activeCategory);
         });
     });
+
+    // Initialize theme
+    document.body.dataset.theme = activeCategory;
 
     function renderCategory(category) {
         const files = allFiles[category] || [];
