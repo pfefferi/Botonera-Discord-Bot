@@ -24,29 +24,31 @@
 [data-theme="chao"] {
     --bg-color: #0f172a;
     --container-bg: rgba(30, 41, 59, 0.4);
-    --accent-primary: #00f2fe;
-    --accent-glow: rgba(0, 242, 254, 0.4);
+    --accent-primary: #7dd3fc;
+    /* Light Blue */
+    --accent-glow: rgba(125, 211, 252, 0.4);
     --font-display: 'Quicksand', sans-serif;
     --btn-radius: 24px;
-    --orb-1: #00f2fe;
-    --orb-2: #fbc2eb;
+    --orb-1: #7dd3fc;
+    --orb-2: #38bdf8;
 }
 
 /* 🦔 SONIC THEME */
 [data-theme="sonic"] {
-    --bg-color: #001a4d;
-    --container-bg: rgba(0, 31, 91, 0.5);
-    --accent-primary: #fbff00;
-    --accent-glow: rgba(251, 255, 0, 0.3);
+    --bg-color: #000b1e;
+    --container-bg: rgba(0, 31, 91, 0.3);
+    --accent-primary: #ffffff;
+    /* Removed yellow, using white/silver */
+    --accent-glow: rgba(255, 255, 255, 0.3);
     --font-display: 'Space Grotesk', sans-serif;
     --btn-radius: 8px;
-    --orb-1: #4facfe;
-    --orb-2: #0033cc;
+    --orb-1: #1d4ed8;
+    --orb-2: #1e3a8a;
 }
 
 /* 🌑 SHADOW THEME */
 [data-theme="shadow"] {
-    --bg-color: #0a0a0a;
+    --bg-color: #050505;
     --container-bg: rgba(20, 20, 20, 0.7);
     --accent-primary: #ff4141;
     --accent-glow: rgba(255, 65, 65, 0.4);
@@ -58,17 +60,18 @@
 
 /* 🐾 POKEMON THEME */
 [data-theme="pokemon"] {
-    --bg-color: #f0f0f0;
-    --container-bg: rgba(255, 255, 255, 0.9);
-    --text-primary: #2d2d2d;
-    --text-secondary: #666666;
-    --border-color: rgba(0, 0, 0, 0.1);
-    --accent-primary: #ff1c1c;
-    --accent-glow: rgba(255, 28, 28, 0.2);
+    --bg-color: #0a0a0a;
+    /* Darkened */
+    --container-bg: rgba(28, 28, 28, 0.8);
+    --text-primary: #ffffff;
+    --text-secondary: #a0a0a0;
+    --border-color: rgba(255, 255, 255, 0.1);
+    --accent-primary: #ef4444;
+    --accent-glow: rgba(239, 68, 68, 0.3);
     --font-display: 'Kanit', sans-serif;
     --btn-radius: 12px;
-    --orb-1: #ff1c1c;
-    --orb-2: #ffffff;
+    --orb-1: #ef4444;
+    --orb-2: #1a1a1a;
 }
 
 /* --- BASE STYLES --- */
