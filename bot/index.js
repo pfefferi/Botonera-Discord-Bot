@@ -42,8 +42,8 @@ const player = createAudioPlayer({
 
 let currentConnection = null;
 
-client.once('ready', () => {
-    console.log(`>>> [READY] Bot logged in as ${client.user.tag}`);
+client.once('clientReady', (c) => {
+    console.log(`>>> [READY] Bot logged in as ${c.user.tag}`);
     // Diagnostic: Check for encryption libraries
     try {
         require('sodium-native');
@@ -78,11 +78,20 @@ client.on('messageCreate', async (message) => {
     if (message.content === '!join' || message.content === '!ping') {
         if (message.content === '!ping') return message.reply('Pong!');
 
-        console.log('>>> Processing !join command');
+        console.log(`>>> Processing !join command from ${message.author.tag}`);
         const channel = message.member?.voice.channel;
 
         if (channel) {
-            console.log(`>>> Found user in channel: ${channel.name} (${channel.id})`);
+            // Check if we already have a connection in this guild
+            if (currentConnection && currentConnection.joinConfig.guildId === message.guild.id) {
+                console.log('>>> Connection already exists in this guild.');
+                if (currentConnection.joinConfig.channelId === channel.id) {
+                    return message.reply(`Already in ${channel.name}!`);
+                }
+                console.log('>>> Moving to new channel...');
+            }
+
+            console.log(`>>> Joining channel: ${channel.name} (${channel.id})`);
             try {
                 currentConnection = joinVoiceChannel({
                     channelId: channel.id,
@@ -92,30 +101,42 @@ client.on('messageCreate', async (message) => {
                     selfMute: false
                 });
 
+                // Detailed state change logging
+                currentConnection.on('stateChange', (oldState, newState) => {
+                    console.log(`>>> VoiceConnection [${channel.name}] changed: ${oldState.status} => ${newState.status}`);
+                });
+
                 // Subscribe connection to the player
                 currentConnection.subscribe(player);
 
-                await message.reply('Joined your voice channel! Ready to play sounds from the soundboard.');
-                console.log('>>> Joined and replied successfully.');
+                // Wait for the connection to be ready before replying
+                try {
+                    await entersState(currentConnection, VoiceConnectionStatus.Ready, 10_000);
+                    await message.reply(`Successfully joined **${channel.name}**! Ready to play.`);
+                    console.log('>>> Joined and Ready.');
+                } catch (err) {
+                    console.error('>>> Failed to enter Ready state within 10s', err);
+                    message.reply('Connected, but struggling to reach "Ready" state. Audio might not work.');
+                }
 
                 // Handle disconnections
                 currentConnection.on(VoiceConnectionStatus.Disconnected, async (oldState, newState) => {
-                    console.log('>>> Voice Connection Disconnected detected.');
+                    console.log('>>> Voice Connection Disconnected.');
                     try {
                         await Promise.race([
                             entersState(currentConnection, VoiceConnectionStatus.Signalling, 5_000),
                             entersState(currentConnection, VoiceConnectionStatus.Connecting, 5_000),
                         ]);
                     } catch (error) {
+                        console.log('>>> Reconnection failed, destroying connection.');
                         currentConnection.destroy();
                         currentConnection = null;
-                        console.log('>>> Connection destroyed permanently.');
                     }
                 });
 
             } catch (error) {
                 console.error('>>> JOIN ERROR:', error);
-                message.reply('Failed to join voice channel. Check bot logs on Render.');
+                message.reply('Failed to join voice channel.');
             }
         } else {
             console.log('>>> User NOT in a voice channel.');
@@ -140,7 +161,8 @@ client.on('messageCreate', async (message) => {
 
 // Audio Player Diagnostics
 player.on('stateChange', (oldState, newState) => {
-    console.log(`>>> AudioPlayer state change: ${oldState.status} => ${newState.status}`);
+    const timestamp = new Date().toLocaleTimeString();
+    console.log(`>>> [${timestamp}] AudioPlayer state: ${oldState.status} => ${newState.status}`);
 });
 
 player.on('error', error => {
