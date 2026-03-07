@@ -12,6 +12,11 @@ const {
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const crypto = require('crypto');
+
+// Generate unique ID for this instance
+const INSTANCE_ID = crypto.randomBytes(3).toString('hex').toUpperCase();
+console.log(`>>> [IDENTITY] Instance ID: [${INSTANCE_ID}] starting up...`);
 
 // 1. Setup Express Server
 const app = express();
@@ -43,7 +48,7 @@ const player = createAudioPlayer({
 let currentConnection = null;
 
 client.once('clientReady', (c) => {
-    console.log(`>>> [READY] Bot logged in as ${c.user.tag}`);
+    console.log(`>>> [READY][${INSTANCE_ID}] Bot logged in as ${c.user.tag}`);
     // Diagnostic: Check for encryption libraries
     try {
         require('sodium-native');
@@ -61,24 +66,29 @@ client.on('error', error => {
 // Debug listener (Verbose)
 client.on('debug', info => {
     if (info.includes('Ready') || info.includes('Login') || info.includes('Invalid')) {
-        console.log(`[DEBUG] ${info}`);
+        console.log(`[DEBUG][${INSTANCE_ID}] ${info}`);
     }
 });
 
 // Command to join a voice channel
 client.on('messageCreate', async (message) => {
     // LOG EVERY MESSAGE RECEIVED (Debug)
-    console.log(`[MSG RECEIVE] "${message.content}" from ${message.author.tag} in ${message.guild ? 'Server: ' + message.guild.name : 'DMs'}`);
+    console.log(`[MSG RECEIVE][${INSTANCE_ID}] "${message.content}" from ${message.author.tag}`);
 
     if (message.author.bot) return;
 
     if (!message.guild) return;
 
+    // Instance Status Command
+    if (message.content === '!status') {
+        return message.reply(`**Instance ID:** \`[${INSTANCE_ID}]\`\n**Status:** Online\n**Voice Connection:** ${currentConnection ? currentConnection.state.status : 'Disconnected'}`);
+    }
+
     // Simple command to summon the bot to your voice channel
     if (message.content === '!join' || message.content === '!ping') {
-        if (message.content === '!ping') return message.reply('Pong!');
+        if (message.content === '!ping') return message.reply(`Pong! [${INSTANCE_ID}]`);
 
-        console.log(`>>> Processing !join command from ${message.author.tag}`);
+        console.log(`>>> [${INSTANCE_ID}] Processing !join command from ${message.author.tag}`);
         const channel = message.member?.voice.channel;
 
         if (channel) {
@@ -91,7 +101,7 @@ client.on('messageCreate', async (message) => {
                 console.log('>>> Moving to new channel...');
             }
 
-            console.log(`>>> Joining channel: ${channel.name} (${channel.id})`);
+            console.log(`>>> [${INSTANCE_ID}] Joining channel: ${channel.name} (${channel.id})`);
             try {
                 currentConnection = joinVoiceChannel({
                     channelId: channel.id,
@@ -101,9 +111,34 @@ client.on('messageCreate', async (message) => {
                     selfMute: false
                 });
 
+                let signallingCount = 0;
+                let connectionTimeout = setTimeout(() => {
+                    if (currentConnection && currentConnection.state.status !== VoiceConnectionStatus.Ready) {
+                        console.log(`>>> [${INSTANCE_ID}] TIMEOUT: Connection stuck in ${currentConnection.state.status}. Destroying.`);
+                        currentConnection.destroy();
+                        currentConnection = null;
+                        message.reply(`[${INSTANCE_ID}] ⚠️ Connection timed out. Multiple instances or Render network issues detected.`);
+                    }
+                }, 20000); // 20s total wait
+
                 // Detailed state change logging
                 currentConnection.on('stateChange', (oldState, newState) => {
-                    console.log(`>>> VoiceConnection [${channel.name}] changed: ${oldState.status} => ${newState.status}`);
+                    console.log(`>>> [${INSTANCE_ID}] VoiceConnection [${channel.name}] changed: ${oldState.status} => ${newState.status}`);
+
+                    if (newState.status === VoiceConnectionStatus.Signalling) {
+                        signallingCount++;
+                        if (signallingCount > 3) {
+                            console.log(`>>> [${INSTANCE_ID}] LOOP DETECTED: Stuck in Signalling. Aborting.`);
+                            currentConnection.destroy();
+                            currentConnection = null;
+                            clearTimeout(connectionTimeout);
+                            message.reply(`[${INSTANCE_ID}] ❌ Stuck in Signalling loop. Reset your token or check for ghost instances.`);
+                        }
+                    }
+
+                    if (newState.status === VoiceConnectionStatus.Ready) {
+                        clearTimeout(connectionTimeout);
+                    }
                 });
 
                 // Subscribe connection to the player
@@ -111,12 +146,11 @@ client.on('messageCreate', async (message) => {
 
                 // Wait for the connection to be ready before replying
                 try {
-                    await entersState(currentConnection, VoiceConnectionStatus.Ready, 10_000);
-                    await message.reply(`Successfully joined **${channel.name}**! Ready to play.`);
-                    console.log('>>> Joined and Ready.');
+                    await entersState(currentConnection, VoiceConnectionStatus.Ready, 15_000);
+                    await message.reply(`[${INSTANCE_ID}] Successfully joined **${channel.name}**! Ready to play.`);
+                    console.log(`>>> [${INSTANCE_ID}] Joined and Ready.`);
                 } catch (err) {
-                    console.error('>>> Failed to enter Ready state within 10s', err);
-                    message.reply('Connected, but struggling to reach "Ready" state. Audio might not work.');
+                    // Handled by stateChange and timeout logic above
                 }
 
                 // Handle disconnections
@@ -162,7 +196,7 @@ client.on('messageCreate', async (message) => {
 // Audio Player Diagnostics
 player.on('stateChange', (oldState, newState) => {
     const timestamp = new Date().toLocaleTimeString();
-    console.log(`>>> [${timestamp}] AudioPlayer state: ${oldState.status} => ${newState.status}`);
+    console.log(`>>> [${timestamp}][${INSTANCE_ID}] AudioPlayer state: ${oldState.status} => ${newState.status}`);
 });
 
 player.on('error', error => {
